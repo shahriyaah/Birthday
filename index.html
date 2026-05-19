@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Birthday Wish Oracle</title>
+
+  <!-- Google Fonts: Cormorant Garamond (display) + DM Sans (body) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet" />
+
+  <style>
+    /* =========================================================
+       CSS CUSTOM PROPERTIES
+    ========================================================= */
+    :root {
+      --bg-deep:      #0d0814;
+      --bg-mid:       #1a0f2e;
+      --bg-accent:    #2a1458;
+      --glass-bg:     rgba(255, 255, 255, 0.055);
+      --glass-border: rgba(255, 255, 255, 0.13);
+      --glass-hover:  rgba(255, 255, 255, 0.09);
+      --glow-purple:  #c084fc;
+      --glow-violet:  #a78bfa;
+      --glow-pink:    #f0abfc;
+      --text-primary: #f3eeff;
+      --text-muted:   rgba(220, 200, 255, 0.55);
+      --radius-lg:    20px;
+      --radius-md:    12px;
+      --transition:   0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* =========================================================
+       RESET & BASE
+    ========================================================= */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+
+    body {
+      min-height: 100vh;
+      background: radial-gradient(ellipse at 30% 20%, #2a1458 0%, #1a0f2e 45%, #0d0814 100%);
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-primary);
+      overflow-x: hidden;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem 4rem;
+    }
+
+    /* =========================================================
+       RAIN CANVAS — sits behind everything
+    ========================================================= */
+    #rain-canvas {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* =========================================================
+       STAR PARTICLES (CSS-only static shimmer)
+    ========================================================= */
+    .stars {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .stars span {
+      position: absolute;
+      width: 2px;
+      height: 2px;
+      border-radius: 50%;
+      background: rgba(200, 180, 255, 0.6);
+      animation: twinkle var(--dur, 4s) ease-in-out infinite var(--delay, 0s);
+    }
+
+    @keyframes twinkle {
+      0%, 100% { opacity: 0.1; transform: scale(1); }
+      50%       { opacity: 0.8; transform: scale(1.6); }
+    }
+
+    /* =========================================================
+       MAIN CARD
+    ========================================================= */
+    .card {
+      position: relative;
+      z-index: 10;
+      width: 100%;
+      max-width: 520px;
+      background: var(--glass-bg);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-lg);
+      backdrop-filter: blur(22px) saturate(1.4);
+      -webkit-backdrop-filter: blur(22px) saturate(1.4);
+      padding: 3rem 2.5rem 2.8rem;
+      box-shadow:
+        0 0 0 1px rgba(192, 132, 252, 0.08),
+        0 24px 80px rgba(0, 0, 0, 0.55),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+      animation: cardReveal 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+    }
+
+    @keyframes cardReveal {
+      from { opacity: 0; transform: translateY(32px) scale(0.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    /* Decorative top-glow line */
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -1px;
+      left: 15%;
+      right: 15%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, var(--glow-violet), var(--glow-pink), var(--glow-violet), transparent);
+      border-radius: 100%;
+      opacity: 0.7;
+    }
+
+    /* =========================================================
+       HEADER
+    ========================================================= */
+    .header {
+      text-align: center;
+      margin-bottom: 2.4rem;
+    }
+
+    .header .eyebrow {
+      font-family: 'DM Sans', sans-serif;
+      font-weight: 300;
+      font-size: 0.72rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: var(--glow-violet);
+      margin-bottom: 0.75rem;
+      opacity: 0.85;
+    }
+
+    .header h1 {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 300;
+      font-size: clamp(2rem, 6vw, 2.9rem);
+      line-height: 1.1;
+      letter-spacing: -0.01em;
+      background: linear-gradient(135deg, #e9d5ff 0%, #c084fc 50%, #f0abfc 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .header h1 em {
+      font-style: italic;
+      font-weight: 300;
+    }
+
+    .header .subtitle {
+      margin-top: 0.9rem;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+      font-weight: 300;
+    }
+
+    /* =========================================================
+       FORM
+    ========================================================= */
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.73rem;
+      font-weight: 500;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      margin-bottom: 0.6rem;
+    }
+
+    /* Row of selects */
+    .selects-row {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr 1fr;
+      gap: 0.75rem;
+    }
+
+    /* Wrapper to allow custom arrow */
+    .select-wrap {
+      position: relative;
+    }
+
+    .select-wrap::after {
+      content: '⌄';
+      position: absolute;
+      right: 0.9rem;
+      top: 50%;
+      transform: translateY(-52%);
+      color: var(--glow-violet);
+      font-size: 1rem;
+      pointer-events: none;
+      line-height: 1;
+    }
+
+    select {
+      width: 100%;
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 0.92rem;
+      font-weight: 400;
+      padding: 0.75rem 2.2rem 0.75rem 1rem;
+      cursor: pointer;
+      transition: background var(--transition), border-color var(--transition), box-shadow var(--transition);
+      outline: none;
+    }
+
+    select option {
+      background: #1e1030;
+      color: var(--text-primary);
+    }
+
+    select:hover {
+      background: var(--glass-hover);
+      border-color: rgba(167, 139, 250, 0.4);
+    }
+
+    select:focus {
+      background: var(--glass-hover);
+      border-color: var(--glow-violet);
+      box-shadow: 0 0 0 3px rgba(167, 139, 250, 0.15);
+    }
+
+    /* =========================================================
+       BUTTON
+    ========================================================= */
+    .btn-reveal {
+      width: 100%;
+      margin-top: 0.5rem;
+      padding: 1rem 2rem;
+      border: none;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-family: 'Cormorant Garamond', serif;
+      font-weight: 600;
+      font-size: 1.15rem;
+      letter-spacing: 0.04em;
+      color: #fff;
+      background: linear-gradient(135deg, #7c3aed 0%, #a855f7 50%, #c026d3 100%);
+      box-shadow:
+        0 0 22px rgba(168, 85, 247, 0.45),
+        0 4px 16px rgba(0, 0, 0, 0.3),
+        inset 0 1px 0 rgba(255,255,255,0.15);
+      transition: transform var(--transition), box-shadow var(--transition), filter var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Shimmer sweep on hover */
+    .btn-reveal::after {
+      content: '';
+      position: absolute;
+      top: 0; left: -75%;
+      width: 50%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.18), transparent);
+      transform: skewX(-20deg);
+      transition: left 0.6s ease;
+    }
+
+    .btn-reveal:hover {
+      transform: translateY(-2px);
+      box-shadow:
+        0 0 40px rgba(192, 132, 252, 0.6),
+        0 8px 24px rgba(0, 0, 0, 0.35),
+        inset 0 1px 0 rgba(255,255,255,0.2);
+      filter: brightness(1.08);
+    }
+
+    .btn-reveal:hover::after {
+      left: 150%;
+    }
+
+    .btn-reveal:active {
+      transform: translateY(0px) scale(0.98);
+    }
+
+    .btn-reveal:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* =========================================================
+       WISH OUTPUT
+    ========================================================= */
+    #wish-output {
+      margin-top: 2rem;
+      opacity: 0;
+      /* height is 0 initially, expands on reveal */
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.5s ease, opacity 0.5s ease;
+    }
+
+    #wish-output.visible {
+      opacity: 1;
+      max-height: 300px;
+    }
+
+    .wish-box {
+      background: rgba(192, 132, 252, 0.07);
+      border: 1px solid rgba(192, 132, 252, 0.22);
+      border-radius: var(--radius-lg);
+      padding: 1.6rem 1.8rem;
+      text-align: center;
+      position: relative;
+      box-shadow: inset 0 0 30px rgba(167, 139, 250, 0.06);
+    }
+
+    /* Small ornamental stars */
+    .wish-box::before,
+    .wish-box::after {
+      content: '✦';
+      position: absolute;
+      top: 0.85rem;
+      font-size: 0.6rem;
+      color: var(--glow-pink);
+      opacity: 0.6;
+    }
+    .wish-box::before { left: 1rem; }
+    .wish-box::after  { right: 1rem; }
+
+    .wish-date {
+      font-size: 0.7rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: var(--glow-violet);
+      margin-bottom: 0.9rem;
+      opacity: 0.8;
+    }
+
+    .wish-text {
+      font-family: 'Cormorant Garamond', Georgia, serif;
+      font-weight: 400;
+      font-style: italic;
+      font-size: clamp(1.15rem, 3.5vw, 1.45rem);
+      line-height: 1.65;
+      color: #ede9fe;
+      letter-spacing: 0.01em;
+    }
+
+    .wish-text .quote-mark {
+      font-size: 2.2em;
+      line-height: 0;
+      vertical-align: -0.35em;
+      color: var(--glow-purple);
+      opacity: 0.5;
+      font-style: normal;
+    }
+
+    /* =========================================================
+       FOOTER NOTE
+    ========================================================= */
+    .footer-note {
+      position: relative;
+      z-index: 10;
+      margin-top: 2rem;
+      font-size: 0.72rem;
+      color: rgba(200, 180, 255, 0.3);
+      letter-spacing: 0.12em;
+      text-align: center;
+    }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media (max-width: 480px) {
+      .card { padding: 2.2rem 1.5rem 2.2rem; }
+      .selects-row { grid-template-columns: 1fr 1.4fr 1fr; gap: 0.5rem; }
+      select { padding: 0.7rem 1.8rem 0.7rem 0.7rem; font-size: 0.85rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Rain canvas -->
+  <canvas id="rain-canvas" aria-hidden="true"></canvas>
+
+  <!-- CSS star shimmer layer -->
+  <div class="stars" id="stars-layer" aria-hidden="true"></div>
+
+  <!-- ===================== MAIN CARD ===================== -->
+  <main class="card" role="main">
+
+    <!-- Header -->
+    <header class="header">
+      <p class="eyebrow">Birthday Oracle</p>
+      <h1>Reveal Your <em>Cosmic</em> Wish</h1>
+      <p class="subtitle">Enter the day you arrived into this world<br>and receive a message written in the stars.</p>
+    </header>
+
+    <!-- Form -->
+    <form id="wish-form" novalidate>
+      <div class="form-group">
+        <label class="form-label" for="sel-day">Your Date of Birth</label>
+        <div class="selects-row">
+
+          <!-- Day -->
+          <div class="select-wrap">
+            <select id="sel-day" name="day" aria-label="Day">
+              <option value="">Day</option>
+            </select>
+          </div>
+
+          <!-- Month -->
+          <div class="select-wrap">
+            <select id="sel-month" name="month" aria-label="Month">
+              <option value="">Month</option>
+              <option value="1">January</option>
+              <option value="2">February</option>
+              <option value="3">March</option>
+              <option value="4">April</option>
+              <option value="5">May</option>
+              <option value="6">June</option>
+              <option value="7">July</option>
+              <option value="8">August</option>
+              <option value="9">September</option>
+              <option value="10">October</option>
+              <option value="11">November</option>
+              <option value="12">December</option>
+            </select>
+          </div>
+
+          <!-- Year -->
+          <div class="select-wrap">
+            <select id="sel-year" name="year" aria-label="Year">
+              <option value="">Year</option>
+            </select>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Submit button -->
+      <button type="submit" class="btn-reveal" id="reveal-btn">
+        ✦ &nbsp;Reveal My Wish
+      </button>
+    </form>
+
+    <!-- Wish output (hidden until form submitted) -->
+    <div id="wish-output" role="status" aria-live="polite">
+      <div class="wish-box">
+        <p class="wish-date" id="wish-date-label"></p>
+        <p class="wish-text">
+          <span class="quote-mark">&ldquo;</span>
+          <span id="wish-content"></span>
+          <span class="quote-mark">&rdquo;</span>
+        </p>
+      </div>
+    </div>
+
+  </main>
+
+  <p class="footer-note">Every soul deserves a little magic ✦</p>
+
+  <!-- ===================== JAVASCRIPT ===================== -->
+  <script>
+    /* =========================================================
+       1. POPULATE DAY & YEAR DROPDOWNS
+    ========================================================= */
+    (function populateSelects() {
+      const daySelect  = document.getElementById('sel-day');
+      const yearSelect = document.getElementById('sel-year');
+
+      // Days 1–31
+      for (let d = 1; d <= 31; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d;
+        daySelect.appendChild(opt);
+      }
+
+      // Years: current year down to 100 years ago
+      const currentYear = new Date().getFullYear();
+      for (let y = currentYear; y >= currentYear - 105; y--) {
+        const opt = document.createElement('option');
+        opt.value = y;
+        opt.textContent = y;
+        yearSelect.appendChild(opt);
+      }
+    })();
+
+    /* =========================================================
+       2. WISH ARRAY (12 unique wishes)
+    ========================================================= */
+    const WISHES = [
+      "May every sunrise remind you that you are the universe's most exquisite experiment — unfinished, expanding, and impossibly beautiful.",
+      "Your story is not written in ink but in starlight. May this year illuminate chapters even you never dared to imagine.",
+      "The cosmos bent itself into a particular shape the day you were born. May you always feel the gravity of how much you matter.",
+      "May you find doors where others see only walls, and may every threshold you cross lead to a version of yourself you are proud to meet.",
+      "You carry entire galaxies inside you. May this year give you the stillness to hear them sing.",
+      "Wishing you the courage to bloom out of season, the grace to rest without guilt, and the magic that comes from simply being you.",
+      "May the things that keep you up at night soon be replaced by dreams so luminous they spill into your waking hours.",
+      "You were placed on this earth at precisely the right moment. May the year ahead feel as intentional as you are.",
+      "May joy find you the way light finds water — effortlessly, brilliantly, and from every direction at once.",
+      "This birthday, may you receive the rare and precious gift of truly seeing yourself the way those who love you do.",
+      "The universe spent 13.8 billion years preparing for your arrival. May this year be worth every second of the wait.",
+      "May every ordinary Tuesday hold a secret wonder, and may you be the kind of person who notices it."
+    ];
+
+    /* =========================================================
+       3. MONTH NAMES FOR DISPLAY
+    ========================================================= */
+    const MONTHS = [
+      'January','February','March','April','May','June',
+      'July','August','September','October','November','December'
+    ];
+
+    /* =========================================================
+       4. FORM SUBMISSION LOGIC
+    ========================================================= */
+    const form        = document.getElementById('wish-form');
+    const output      = document.getElementById('wish-output');
+    const wishContent = document.getElementById('wish-content');
+    const wishDate    = document.getElementById('wish-date-label');
+    const revealBtn   = document.getElementById('reveal-btn');
+
+    let lastWishIndex = -1; // Track last shown wish to avoid repeats
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault(); // Prevent page reload
+
+      const day   = document.getElementById('sel-day').value;
+      const month = document.getElementById('sel-month').value;
+      const year  = document.getElementById('sel-year').value;
+
+      // Basic validation
+      if (!day || !month || !year) {
+        shakeForm();
+        return;
+      }
+
+      // Pick a different random wish each time
+      let newIndex;
+      do {
+        newIndex = Math.floor(Math.random() * WISHES.length);
+      } while (newIndex === lastWishIndex && WISHES.length > 1);
+      lastWishIndex = newIndex;
+
+      // Format date label
+      const monthName = MONTHS[parseInt(month) - 1];
+      wishDate.textContent = `${monthName} ${day}, ${year}`;
+
+      // If output already visible, fade it out first, then swap content
+      if (output.classList.contains('visible')) {
+        output.style.opacity = '0';
+        setTimeout(() => {
+          wishContent.textContent = WISHES[newIndex];
+          output.style.opacity = '1';
+        }, 280);
+      } else {
+        // First reveal: set content then fade in
+        wishContent.textContent = WISHES[newIndex];
+        output.classList.add('visible');
+      }
+
+      // Brief button feedback
+      revealBtn.textContent = '✦  A wish appears…';
+      revealBtn.disabled = true;
+      setTimeout(() => {
+        revealBtn.innerHTML = '✦ &nbsp;Reveal Another Wish';
+        revealBtn.disabled = false;
+      }, 900);
+    });
+
+    /* Shake animation for incomplete form */
+    function shakeForm() {
+      const row = document.querySelector('.selects-row');
+      row.animate([
+        { transform: 'translateX(0)' },
+        { transform: 'translateX(-7px)' },
+        { transform: 'translateX(7px)' },
+        { transform: 'translateX(-5px)' },
+        { transform: 'translateX(5px)' },
+        { transform: 'translateX(0)' }
+      ], { duration: 350, easing: 'ease-in-out' });
+    }
+
+    /* =========================================================
+       5. RAIN CANVAS ANIMATION
+    ========================================================= */
+    (function initRain() {
+      const canvas = document.getElementById('rain-canvas');
+      const ctx    = canvas.getContext('2d');
+
+      // Raindrop config
+      const DROP_COUNT = 120;
+      const drops = [];
+
+      function resize() {
+        canvas.width  = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+
+      // Create a single raindrop object
+      function createDrop() {
+        return {
+          x:       Math.random() * canvas.width,
+          y:       Math.random() * canvas.height - canvas.height, // start above viewport
+          length:  Math.random() * 18 + 8,    // line length 8–26px
+          speed:   Math.random() * 2.5 + 1.2, // fall speed
+          opacity: Math.random() * 0.18 + 0.04 // very faint: 0.04–0.22
+        };
+      }
+
+      // Initialise all drops
+      function initDrops() {
+        drops.length = 0;
+        for (let i = 0; i < DROP_COUNT; i++) {
+          const d = createDrop();
+          d.y = Math.random() * canvas.height; // scatter vertically at start
+          drops.push(d);
+        }
+      }
+
+      function draw() {
+        // Fade trail (semi-transparent clear)
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        drops.forEach(d => {
+          // Draw a thin vertical line
+          ctx.beginPath();
+          ctx.moveTo(d.x, d.y);
+          ctx.lineTo(d.x, d.y + d.length);
+          ctx.strokeStyle = `rgba(200, 180, 255, ${d.opacity})`;
+          ctx.lineWidth   = 0.8;
+          ctx.lineCap     = 'round';
+          ctx.stroke();
+
+          // Move drop downward
+          d.y += d.speed;
+
+          // Reset drop when it exits the bottom
+          if (d.y > canvas.height + 30) {
+            d.x       = Math.random() * canvas.width;
+            d.y       = -d.length - 10;
+            d.length  = Math.random() * 18 + 8;
+            d.speed   = Math.random() * 2.5 + 1.2;
+            d.opacity = Math.random() * 0.18 + 0.04;
+          }
+        });
+
+        requestAnimationFrame(draw);
+      }
+
+      // Initialise & kick off
+      resize();
+      initDrops();
+      draw();
+
+      // Re-size on window resize
+      window.addEventListener('resize', () => {
+        resize();
+        initDrops(); // re-scatter drops to fill new size
+      });
+    })();
+
+    /* =========================================================
+       6. CSS STAR PARTICLES (JS-generated for randomness)
+    ========================================================= */
+    (function initStars() {
+      const container = document.getElementById('stars-layer');
+      const STAR_COUNT = 55;
+
+      for (let i = 0; i < STAR_COUNT; i++) {
+        const s = document.createElement('span');
+        s.style.left    = Math.random() * 100 + '%';
+        s.style.top     = Math.random() * 100 + '%';
+        s.style.setProperty('--dur',   (Math.random() * 4 + 3) + 's');
+        s.style.setProperty('--delay', (Math.random() * 6)     + 's');
+        // Vary size slightly
+        const size = Math.random() * 2 + 1;
+        s.style.width  = size + 'px';
+        s.style.height = size + 'px';
+        container.appendChild(s);
+      }
+    })();
+  </script>
+
+</body>
+</html>
+
